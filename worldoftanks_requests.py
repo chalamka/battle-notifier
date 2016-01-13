@@ -27,3 +27,23 @@ def get_sh_battles(application_id, clan_id):
     sh_battles = requests.get(sh_url, params=payload)
 
     return sh_battles.json()
+
+
+def get_clan_info(application_id, clan_id):
+    payload = {'application_id': application_id, 'clan_id': clan_id}
+
+    clan_url = 'https://api.worldoftanks.com/wot/globalmap/claninfo/'
+
+    clan_info = requests.get(clan_url, params=payload)
+
+    return clan_info.json()
+
+
+def get_province_info(application_id, front_id, province_id):
+    payload = {'application_id': application_id, 'front_id': front_id, 'province_id': province_id}
+
+    province_url = 'https://api.worldoftanks.com/wot/globalmap/provinces/'
+
+    province_info = requests.get(province_url, params=payload)
+
+    return province_info.json()

@@ -3,6 +3,7 @@ import json
 import sys
 import datetime as dt
 import os
+import time
 import slack_webhooks as slack
 import worldoftanks_requests as wot
 
@@ -11,6 +12,7 @@ config = {}
 
 
 def configure_logging(level):
+    os.chdir(os.path.dirname(sys.argv[0]))
     if not os.path.exists("logs/"):
         os.mkdir("logs/")
 
@@ -69,7 +71,7 @@ def process_cw_battles(cw_battles):
     else:
         if cw_battles['meta']['count'] != 0:
             log.info("Found {} cw battles to process".format(cw_battles['meta']['count']))
-            cw_battles = cw_battles['data'][config['clan_id']]
+            cw_battles = cw_battles['data']
         else:
             log.info("No cw battles to process")
             cw_battles = []
@@ -116,19 +118,54 @@ def create_sh_battle_message(sh_battles):
     return sh_fields
 
 
+def process_clan_info(clan_info, clan_id):
+    if clan_info['status'] != 'ok':
+        log.critical("wargaming clan api returned error status: {}".format(clan_info['status']))
+        sys.exit(1)
+    else:
+        clan_info = clan_info['data'][clan_id]
+        log.info("processing clan information for clan_id: {}".format(clan_id))
+        return clan_info
+
+
+def process_province_info(province_info):
+    if province_info['status'] != 'ok':
+        log.critical("wargaming province api returned error status: {}".format(province_info['status']))
+        sys.exit(1)
+    else:
+        province_info = province_info['data']
+        log.info("processing province information for: {}".format(province_info['province_name']))
+        return province_info
+
+
 def format_cw_battle(battle):
     battle_time = dt.datetime.fromtimestamp(int(battle['time']))
     current_time = dt.datetime.now()
     time_delta = battle_time - current_time
     hours_to_battle = int((time_delta.seconds / 60) / 60)
     minutes_to_battle = int((time_delta.seconds / 60) % 60)
-    message = ":rddt: RDDT vs {} :fire:\nSpecial pops in {} hour(s) and {} minute(s) [{} at {} CST]"\
-        .format(battle['competitor_id'],
+
+    competitor_clan_info = process_clan_info(wot.get_clan_info(config['application_id'], battle['competitor_id']),
+                                             battle['competitor_id'])
+
+    province_info = process_province_info(wot.get_province_info(config['application_id'],
+                                                                battle['front_id'],
+                                                                battle['province_id']))
+
+    text = ":rddt: RDDT vs {} :fire:\n" \
+           "Province: {} - Map: {}\n" \
+           "Battle starts in {} hour(s) and {} minute(s) [{} at {} CST]"\
+        .format(competitor_clan_info['tag'],
+                province_info['province_name'],
+                province_info['arena_name'],
                 hours_to_battle,
                 minutes_to_battle,
                 battle_time.strftime("%m/%d/%Y"),
                 battle_time.strftime("%H:%M"))
-    return {'title': ":siren: Clan Wars {} :siren:".format(battle['type']), 'message': message}
+
+    # wait 1 second between calls in order to stay below API restriction
+    time.sleep(1)
+    return {'title': ":siren: Clan Wars {} :siren:".format(battle['type']), 'message': text}
 
 
 def format_sh_battle(battle):

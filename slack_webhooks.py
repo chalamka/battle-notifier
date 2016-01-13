@@ -34,7 +34,9 @@ def send_slack_webhook(api_url, slack_payload):
     """
     response = requests.post(api_url, slack_payload)
 
-    # if response.content == b'ok':
+    if response.content == b'ok':
         # log.info("Message posted (content: {})".format(slack_payload))
-    # else:
+        return True
+    else:
         # log.critical("Slack response {}".format(response.status_code))
+        return False
