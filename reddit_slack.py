@@ -95,7 +95,7 @@ def process_sh_battles(sh_battles):
 
 
 def create_cw_battle_message(cw_battles):
-    cw_battles = list(cw_battles)
+    cw_battles = [c for c in cw_battles]
     cw_battles.sort(key=lambda x: x['time'])
 
     cw_fields = []
@@ -123,7 +123,7 @@ def process_clan_info(clan_info, clan_id):
         log.critical("wargaming clan api returned error status: {}".format(clan_info['status']))
         sys.exit(1)
     else:
-        clan_info = clan_info['data'][clan_id]
+        clan_info = clan_info['data']
         log.info("processing clan information for clan_id: {}".format(clan_id))
         return clan_info
 
@@ -134,7 +134,7 @@ def process_province_info(province_info):
         sys.exit(1)
     else:
         province_info = province_info['data']
-        log.info("processing province information for: {}".format(province_info['province_name']))
+        log.info("processing province information for: {}".format(province_info[0]['province_name']))
         return province_info
 
 
@@ -155,9 +155,9 @@ def format_cw_battle(battle):
     text = ":rddt: RDDT vs {} :fire:\n" \
            "Province: {} - Map: {}\n" \
            "Battle starts in {} hour(s) and {} minute(s) [{} at {} CST]"\
-        .format(competitor_clan_info['tag'],
-                province_info['province_name'],
-                province_info['arena_name'],
+        .format(competitor_clan_info[str(battle['competitor_id'])]['tag'],
+                province_info[0]['province_name'],
+                province_info[0]['arena_name'],
                 hours_to_battle,
                 minutes_to_battle,
                 battle_time.strftime("%m/%d/%Y"),
