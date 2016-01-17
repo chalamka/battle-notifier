@@ -6,6 +6,7 @@ import os
 import time
 import slack_webhooks as slack
 import worldoftanks_requests as wot
+import argparse
 
 log = logging.getLogger(__name__)
 config = {}
@@ -35,12 +36,25 @@ def load_config(filename):
         sys.exit(1)
 
 
-def battle_notification():
-    sh_attachment = []
-    cw_attachment = []
+def configure_parser():
+    parser = argparse.ArgumentParser()
+    subparser = parser.add_subparsers()
 
-    sh_api_response = wot.get_sh_battles(config['application_id'], config['clan_id'])
-    sh_battles = process_sh_battles(sh_api_response)
+    cw_parser = subparser.add_parser('cw_notification')
+    cw_parser.set_defaults(func=cw_notification)
+
+    sh_parser = subparser.add_parser('sh_notification')
+    sh_parser.set_defaults(func=sh_notification)
+
+    message_parser = subparser.add_parser('send_message')
+    message_parser.set_defaults(func=send_message)
+    message_parser.add_argument('message')
+
+    return parser
+
+
+def cw_notification(args):
+    cw_attachment = []
 
     cw_api_response = wot.get_cw_battles(config['application_id'], config['clan_id'])
     cw_battles = process_cw_battles(cw_api_response)
@@ -51,17 +65,33 @@ def battle_notification():
         cw_attachment = [slack.build_slack_attachment("Upcoming clanwars battle",
                                                       "List of upcoming Clan Wars battles", "", "#D00000", cw_fields)]
 
+    if cw_attachment:
+        sh_payload = slack.build_slack_payload(cw_attachment, "<!channel> Upcoming battles", config['bot_name'],
+                                               config['icon_emoji'], config['channel_name'])
+        slack.send_slack_webhook(config['slack_url'], sh_payload)
+
+
+def sh_notification(args):
+    sh_attachment = []
+
+    sh_api_response = wot.get_sh_battles(config['application_id'], config['clan_id'])
+    sh_battles = process_sh_battles(sh_api_response)
+
     if sh_battles:
         sh_messages = create_sh_battle_message(sh_battles)
         sh_fields = [slack.build_slack_field(b['title'], b['message']) for b in sh_messages]
         sh_attachment = [slack.build_slack_attachment("Upcoming stronghold battle",
                                                       "List of upcoming Stronghold battles:", "", "#D00000", sh_fields)]
 
-    if sh_attachment or cw_attachment:
-        attachment = cw_attachment + sh_attachment
-        sh_payload = slack.build_slack_payload(attachment, "<!channel> Upcoming battles", config['bot_name'],
+    if sh_attachment:
+        sh_payload = slack.build_slack_payload(sh_attachment, "<!channel> Upcoming battles", config['bot_name'],
                                                config['icon_emoji'], config['channel_name'])
         slack.send_slack_webhook(config['slack_url'], sh_payload)
+
+
+def send_message(args):
+    # TODO
+    pass
 
 
 def process_cw_battles(cw_battles):
@@ -190,7 +220,7 @@ def main(args):
     log.info("Logging configured")
 
     # get config file from system arguments
-    config_file = "".join(args)
+    config_file = 'config.json'
     log.info("Loading config file: {}".format(config_file))
 
     # load configuration details from config file and set globally
@@ -198,8 +228,12 @@ def main(args):
     config = load_config(config_file)
     log.info("Successfully loaded config file: {}".format(config_file))
 
-    battle_notification()
-
+    # parse arguments from command line and call the desired function / script
+    parser = configure_parser()
+    parsed_args = parser.parse_args()
+    
+    log.info("Parsed arguments:  {}".format(args))
+    parsed_args.func(parsed_args)
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    main(sys.argv)
