@@ -131,11 +131,15 @@ def create_cw_battle_message(cw_battles):
     cw_battles = [c for c in cw_battles]
     cw_battles.sort(key=lambda x: x['time'])
 
+    current_time = dt.datetime.now()
+
     cw_fields = []
 
     if cw_battles:
         for battle in cw_battles:
-            cw_fields.append(format_cw_battle(battle))
+            battle_time = dt.datetime.fromtimestamp(int(battle['time']))
+            if battle_time > current_time:
+                cw_fields.append(format_cw_battle(battle))
 
     return cw_fields
 
