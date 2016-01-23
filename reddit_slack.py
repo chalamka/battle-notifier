@@ -13,7 +13,10 @@ config = {}
 
 
 def configure_logging(level):
-    os.chdir(os.path.dirname(sys.argv[0]))
+    abspath = os.path.abspath(__file__)
+    dname = os.path.dirname(abspath)
+    os.chdir(dname)
+    # os.chdir(os.path.dirname(sys.argv[0]))
     if not os.path.exists("logs/"):
         os.mkdir("logs/")
 
