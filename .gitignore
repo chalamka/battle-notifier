@@ -1,4 +1,5 @@
 config.json
+processed.json
 logs/
 .idea/
 __pycache__/

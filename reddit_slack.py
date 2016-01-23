@@ -38,6 +38,9 @@ def load_config(filename):
         log.critical("Exiting script (cannot load config)")
         sys.exit(1)
 
+def write_json(filename, to_write):
+    with open(filename, 'w') as fp:
+        return json.dump(to_write, fp)
 
 def configure_parser():
     parser = argparse.ArgumentParser()
@@ -68,7 +71,7 @@ def cw_notification(args):
         cw_attachment = [slack.build_slack_attachment("Upcoming clanwars battle",
                                                       "List of upcoming Clan Wars battles", "", "#D00000", cw_fields)]
 
-    if cw_attachment:
+    if cw_messages:
         sh_payload = slack.build_slack_payload(cw_attachment, "<!channel> Upcoming battles", config['bot_name'],
                                                config['icon_emoji'], config['channel_name'])
         slack.send_slack_webhook(config['slack_url'], sh_payload)
@@ -134,12 +137,18 @@ def create_cw_battle_message(cw_battles):
     current_time = dt.datetime.now()
 
     cw_fields = []
+    processed = list(load_config('processed.json'))
 
     if cw_battles:
         for battle in cw_battles:
             battle_time = dt.datetime.fromtimestamp(int(battle['time']))
-            if battle_time > current_time:
+            battle_id = str(battle['time']) + battle['province_name']
+
+            if battle_time > current_time and battle_id not in processed:
                 cw_fields.append(format_cw_battle(battle))
+                processed.append(battle_id)
+
+    write_json('processed.json', processed)
 
     return cw_fields
 
