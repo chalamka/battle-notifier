@@ -16,7 +16,6 @@ def configure_logging(level):
     abspath = os.path.abspath(__file__)
     dname = os.path.dirname(abspath)
     os.chdir(dname)
-    # os.chdir(os.path.dirname(sys.argv[0]))
     if not os.path.exists("logs/"):
         os.mkdir("logs/")
 
@@ -38,9 +37,11 @@ def load_config(filename):
         log.critical("Exiting script (cannot load config)")
         sys.exit(1)
 
+
 def write_json(filename, to_write):
     with open(filename, 'w') as fp:
         return json.dump(to_write, fp)
+
 
 def configure_parser():
     parser = argparse.ArgumentParser()
@@ -56,11 +57,25 @@ def configure_parser():
     message_parser.set_defaults(func=send_message)
     message_parser.add_argument('message')
 
+    daemon = subparser.add_parser('daemon')
+    daemon.set_defaults(func=notify_loop)
+
     return parser
+
+
+def notify_loop(args):
+    try:
+        while True:
+            cw_notification(args)
+            time.sleep(30)
+    except KeyboardInterrupt:
+        log.info("Interupted, shutting down")
+        exit(0)
 
 
 def cw_notification(args):
     cw_attachment = []
+    cw_messages = None
 
     cw_api_response = wot.get_cw_battles(config['application_id'], config['clan_id'])
     cw_battles = process_cw_battles(cw_api_response)
