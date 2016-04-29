@@ -248,7 +248,7 @@ def format_sh_battle(battle):
 
 def main(args):
     # set logging levels to program defaults
-    configure_logging(logging.DEBUG)
+    configure_logging(logging.ERROR)
     log.info("Logging configured")
 
     # get config file from system arguments
