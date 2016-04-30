@@ -83,7 +83,7 @@ def cw_notification(args):
     if cw_battles:
         cw_messages = create_cw_battle_message(cw_battles)
         cw_fields = [slack.build_slack_field(b['title'], b['message']) for b in cw_messages]
-        message_color = "danger" if cw_battles['type'] == 'attack' else 'good'
+        message_color = "danger" if cw_battles[0]['type'] == 'attack' else 'good'
         cw_attachment = [slack.build_slack_attachment("Upcoming clanwars battle",
                                                       "List of upcoming Clan Wars battles", "", message_color, cw_fields)]
 
