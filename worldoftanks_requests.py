@@ -1,18 +1,40 @@
 import requests
+from urllib.error import HTTPError
+import datetime as dt
+
+
+class CWBattle:
+    def __init__(self, response):
+        self.attack_type = response['data']['attack_type']
+        self.front_id = response['data']['front_id']
+        self.front_name = response['data']['front_name']
+        self.competitor_id = response['data']['competitor_id']
+        self.time = response['data']['time']
+        self.vehicle_level = response['data']['vehicle_level']
+        self.province_id = response['data']['province_id']
+        self.type = response['data']['type']
+        self.province_name = response['data']['province_name']
+
+    def convert_time(self):
+        return dt.datetime.fromtimestamp(int(self.time))
 
 
 def get_cw_battles(application_id, clan_id):
     """
     Get cw battle information for a clan from worldoftanks API
-    :return:  dictionary of parsed json data for each battle type
+    :return:  list of Battle objects
     """
     payload = {'application_id': application_id, 'clan_id': clan_id}
 
     cw_url = 'https://api.worldoftanks.com/wot/globalmap/clanbattles/'
 
-    cw_battles = requests.get(cw_url, params=payload)
+    r = requests.get(cw_url, params=payload)
+    cw_battles = r.json()
 
-    return cw_battles.json()
+    if cw_battles['status'] != 'ok':
+        raise HTTPError(r.url, cw_battles['status'])
+    else:
+        return [CWBattle(battle) for battle in cw_battles['data']]
 
 
 def get_sh_battles(application_id, clan_id):

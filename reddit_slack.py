@@ -8,34 +8,54 @@ import slack_webhooks as slack
 import worldoftanks_requests as wot
 import argparse
 
-log = logging.getLogger(__name__)
-config = {}
 
+class BattleNotifier:
+    def __init__(self, config_path='config.json', log_level=logging.CRITICAL):
+        self.battles = []
+        self.logger = self._configure_logging(log_level)
+        self.config = self._load_config(config_path)
 
-def configure_logging(level):
-    abspath = os.path.abspath(__file__)
-    dname = os.path.dirname(abspath)
-    os.chdir(dname)
-    if not os.path.exists("logs/"):
-        os.mkdir("logs/")
+    def run(self):
+        while True:
+            try:
+                if self._update_battles():
+                    self._slack_notification()
+                time.sleep(30)
+            except KeyboardInterrupt:
+                pass
 
-    l = logging.getLogger(__name__)
-    logger_format = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-    file_handler = logging.FileHandler("logs/" + dt.date.today().strftime("%m-%d-%Y.log"))
+    def _update_battles(self):
+        pass
 
-    l.setLevel(level)
-    file_handler.setFormatter(logger_format)
-    l.addHandler(file_handler)
+    def _slack_notification(self):
+        pass
 
+    def _configure_logging(self, level):
+        abspath = os.path.abspath(__file__)
+        dname = os.path.dirname(abspath)
+        os.chdir(dname)
+        if not os.path.exists("logs/"):
+            os.mkdir("logs/")
 
-def load_config(filename):
-    try:
-        with open(filename) as fp:
-            return json.load(fp)
-    except IOError:
-        log.critical("Failed to load configuration file: {}".format(filename))
-        log.critical("Exiting script (cannot load config)")
-        sys.exit(1)
+        l = logging.getLogger(__name__)
+        logger_format = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+        file_handler = logging.FileHandler("logs/" + dt.date.today().strftime("%m-%d-%Y.log"))
+
+        l.setLevel(level)
+        file_handler.setFormatter(logger_format)
+        l.addHandler(file_handler)
+
+        return l
+
+    def _load_config(self, filename):
+        try:
+            with open(filename) as fp:
+                return json.load(fp)
+        except IOError:
+            self.logger.critical("Failed to load configuration file: {}".format(filename))
+            self.logger.critical("Exiting script (cannot load config)")
+            sys.exit(1)
+
 
 
 def write_json(filename, to_write):
