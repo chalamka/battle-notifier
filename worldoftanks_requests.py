@@ -19,6 +19,42 @@ class CWBattle:
         return dt.datetime.fromtimestamp(int(self.time))
 
 
+class Clan:
+    def __init__(self, response):
+        self.clan_id = response['data']['clan_id']
+        self.name = response['data']['name']
+        self.tag = response['data']['tag']
+
+
+class Province:
+    def __init__(self, response):
+        self.arena_id = response['data']['arena_id']
+        self.arena_name = response['data']['arena_name']
+        self.attackers = response['data']['attackers']
+        self.battles_start_at = response['data']['battles_start_at']
+        self.competitors = response['data']['competitors']
+        self.current_min_bet = response['data']['current_min_bet']
+        self.daily_revenue = response['data']['daily_revenue']
+        self.front_id = response['data']['front_id']
+        self.front_name = response['data']['front_name']
+        self.is_borders_disabled = response['data']['is_borders_disabled']
+        self.landing_type = response['data']['landing_type']
+        self.last_won_bet = response['data']['last_won_bet']
+        self.max_bets = response['data']['max_bets']
+        self.neighbours = response['data']['neighbours']
+        self.owner_clan_id = response['data']['owner_clan_id']
+        self.pillage_end_at = response['data']['pillage_end_at']
+        self.prime_time = response['data']['prime_time']
+        self.province_id = response['data']['province_id']
+        self.province_name = response['data']['province_name']
+        self.revenue_level = response['data']['revenue_level']
+        self.round_number = response['data']['round_number']
+        self.server = response['data']['server']
+        self.status = response['data']['status']
+        self.uri = response['data']['uri']
+        self.world_redivision = response['data']['world_redivision']
+        self.active_battles = response['data']['active_battles']
+
 def get_cw_battles(application_id, clan_id):
     """
     Get cw battle information for a clan from worldoftanks API
@@ -56,9 +92,13 @@ def get_clan_info(application_id, clan_id):
 
     clan_url = 'https://api.worldoftanks.com/wot/globalmap/claninfo/'
 
-    clan_info = requests.get(clan_url, params=payload)
+    r = requests.get(clan_url, params=payload)
+    clan_info = r.json()
 
-    return clan_info.json()
+    if clan_info['status'] != 'ok':
+        raise HTTPError(r.url, clan_info['status'])
+    else:
+        return Clan(clan_info)
 
 
 def get_province_info(application_id, front_id, province_id):
@@ -66,6 +106,10 @@ def get_province_info(application_id, front_id, province_id):
 
     province_url = 'https://api.worldoftanks.com/wot/globalmap/provinces/'
 
-    province_info = requests.get(province_url, params=payload)
+    r = requests.get(province_url, params=payload)
+    province_info = r.json()
 
-    return province_info.json()
+    if province_info['status'] != 'ok':
+        raise HTTPError(r.url, province_info['status'])
+    else:
+        return Province(province_info)
