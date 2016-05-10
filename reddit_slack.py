@@ -4,16 +4,27 @@ import sys
 import datetime as dt
 import os
 import time
+from urllib.error import HTTPError
 import slack_webhooks as slack
 import worldoftanks_requests as wot
 import argparse
+from itertools import dropwhile
+from math import log2, ceil
 
 
 class BattleNotifier:
     def __init__(self, config_path='config.json', log_level=logging.CRITICAL):
         self.battles = []
-        self.logger = self._configure_logging(log_level)
-        self.config = self._load_config(config_path)
+        self.logger = None
+        self._configure_logging(log_level)
+
+        config = self._load_config(config_path)
+        self.application_id = config['application_id']
+        self.clan_id = config['clan_id']
+        self.bot_name = config['bot_name']
+        self.icon_emoji = config['icon_emoji']
+        self.channel_name = config['channel_name']
+        self.slack_url = config['slack_url']
 
     def run(self):
         while True:
@@ -22,13 +33,70 @@ class BattleNotifier:
                     self._slack_notification()
                 time.sleep(30)
             except KeyboardInterrupt:
-                pass
+                self.logger.log("Interrupted, shutting down")
+                sys.exit(1)
 
     def _update_battles(self):
+        new_battles = self._get_new_battles()
+        if not new_battles:
+            return False
+        else:
+            self.battles += new_battles
+            self.battles.sort(key=lambda x: x[0].time)
+            self.battles = list(dropwhile(lambda x: x[0].time < dt.datetime.now(), self.battles))
+            return True
+
+    def _get_new_battles(self):
+        try:
+            new_battles = wot.get_cw_battles(self.application_id, self.clan_id)
+            battles_info = [(battle,
+                             wot.get_province_info(self.application_id, battle.front_id, battle.province_id),
+                             wot.get_clan_info(self.application_id, battle.competitor_id)
+                             for battle in new_battles if battle.battle_id not in self.battles)]
+            return battles_info
+        except HTTPError:
+            self.logger.error("HTTP Error when getting battles")
+            return []
+
+    def _simul_check(self, battle):
         pass
 
     def _slack_notification(self):
-        pass
+        attachments = []
+        payload = None
+        thumb_url = "http://na.wargaming.net/clans/media/clans/emblems/cl_{}/{}/emblem_64x64.png"
+        current_time = dt.datetime.now()
+
+        for battle, province, clan in self.battles:
+            if not battle.notified:
+                province_text = "Province: {} Map: {}".format(province.province_name, province.arena_name)
+
+                battle_start_time = dt.datetime.fromtimestamp(int(battle.time))
+                time_until_battle = current_time - battle_start_time
+                minutes_until_battle = time_until_battle.total_seconds() / 60
+
+                if battle.type == 'attack' and battle.attack_type == 'tournament':
+                    time_text = "Tournament Round {} of {} begins at {} CST popping in {} minutes".format(
+                        province.round_number,
+                        ceil(log2(len(province.attackers))),
+                        battle_start_time.strftime("%H:%M"),
+                        minutes_until_battle)
+                else:
+                    time_text = "{} begins at {} CST popping in {} minutes".format(
+                        battle.type.title(),
+                        battle_start_time.strftime("%H:%M"),
+                        minutes_until_battle)
+
+                if self._simul_check(battle):
+                    simul_text = ""
+
+                battle_attachment = slack.build_slack_attachment(pretext="Upcoming CW battle vs. {}".format(clan.tag),
+                                                                 fields=[],
+                                                                 title=":rddt: RDDT vs. {} :fire:".format(clan.tag),
+                                                                 level="good" if battle.type == 'defence' else "danger",
+                                                                 thumb_url=thumb_url.format(clan.clan_id[-3:], clan.clan_id),
+                                                                 text="{}\n{}\n{}".format(province_text, time_text, simul_text))
+                attachments.append()
 
     def _configure_logging(self, level):
         abspath = os.path.abspath(__file__)
@@ -45,7 +113,7 @@ class BattleNotifier:
         file_handler.setFormatter(logger_format)
         l.addHandler(file_handler)
 
-        return l
+        self.logger = l
 
     def _load_config(self, filename):
         try:
@@ -55,7 +123,6 @@ class BattleNotifier:
             self.logger.critical("Failed to load configuration file: {}".format(filename))
             self.logger.critical("Exiting script (cannot load config)")
             sys.exit(1)
-
 
 
 def write_json(filename, to_write):
@@ -73,24 +140,10 @@ def configure_parser():
     sh_parser = subparser.add_parser('sh_notification')
     sh_parser.set_defaults(func=sh_notification)
 
-    message_parser = subparser.add_parser('send_message')
-    message_parser.set_defaults(func=send_message)
-    message_parser.add_argument('message')
-
     daemon = subparser.add_parser('daemon')
     daemon.set_defaults(func=notify_loop)
 
     return parser
-
-
-def notify_loop(args):
-    try:
-        while True:
-            cw_notification(args)
-            time.sleep(30)
-    except KeyboardInterrupt:
-        log.info("Interupted, shutting down")
-        exit(0)
 
 
 def cw_notification(args):
@@ -129,11 +182,6 @@ def sh_notification(args):
         sh_payload = slack.build_slack_payload(sh_attachment, "<!channel> Upcoming battles", config['bot_name'],
                                                config['icon_emoji'], config['channel_name'])
         slack.send_slack_webhook(config['slack_url'], sh_payload)
-
-
-def send_message(args):
-    # TODO
-    pass
 
 
 def process_cw_battles(cw_battles):
@@ -200,26 +248,6 @@ def create_sh_battle_message(sh_battles):
     return sh_fields
 
 
-def process_clan_info(clan_info, clan_id):
-    if clan_info['status'] != 'ok':
-        log.critical("wargaming clan api returned error status: {}".format(clan_info['status']))
-        sys.exit(1)
-    else:
-        clan_info = clan_info['data']
-        log.info("processing clan information for clan_id: {}".format(clan_id))
-        return clan_info
-
-
-def process_province_info(province_info):
-    if province_info['status'] != 'ok':
-        log.critical("wargaming province api returned error status: {}".format(province_info['status']))
-        sys.exit(1)
-    else:
-        province_info = province_info['data']
-        log.info("processing province information for: {}".format(province_info[0]['province_name']))
-        return province_info
-
-
 def format_cw_battle(battle):
     battle_time = dt.datetime.fromtimestamp(int(battle['time']))
     current_time = dt.datetime.now()
@@ -267,24 +295,10 @@ def format_sh_battle(battle):
 
 
 def main(args):
-    # set logging levels to program defaults
-    configure_logging(logging.ERROR)
-    log.info("Logging configured")
-
-    # get config file from system arguments
-    config_file = 'config.json'
-    log.info("Loading config file: {}".format(config_file))
-
-    # load configuration details from config file and set globally
-    global config
-    config = load_config(config_file)
-    log.info("Successfully loaded config file: {}".format(config_file))
-
     # parse arguments from command line and call the desired function / script
     parser = configure_parser()
     parsed_args = parser.parse_args()
     
-    log.info("Parsed arguments:  {}".format(args))
     parsed_args.func(parsed_args)
 
 if __name__ == "__main__":
