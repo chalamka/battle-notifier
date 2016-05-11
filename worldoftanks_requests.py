@@ -6,15 +6,15 @@ from time import sleep
 
 class CWBattle:
     def __init__(self, response):
-        self.attack_type = response['data']['attack_type']
-        self.front_id = response['data']['front_id']
-        self.front_name = response['data']['front_name']
-        self.competitor_id = response['data']['competitor_id']
-        self.time = response['data']['time']
-        self.vehicle_level = response['data']['vehicle_level']
-        self.province_id = response['data']['province_id']
-        self.type = response['data']['type']
-        self.province_name = response['data']['province_name']
+        self.attack_type = response['attack_type']
+        self.front_id = response['front_id']
+        self.front_name = response['front_name']
+        self.competitor_id = response['competitor_id']
+        self.time = response['time']
+        self.vehicle_level = response['vehicle_level']
+        self.province_id = response['province_id']
+        self.type = response['type']
+        self.province_name = response['province_name']
         self.battle_id = str(self.province_id) + str(self.time)
         self.notified = False
 
@@ -23,10 +23,10 @@ class CWBattle:
 
 
 class Clan:
-    def __init__(self, response):
-        self.clan_id = response['data']['clan_id']
-        self.name = response['data']['name']
-        self.tag = response['data']['tag']
+    def __init__(self, response, clan_id):
+        self.clan_id = response['data'][str(clan_id)]['clan_id']
+        self.name = response['data'][str(clan_id)]['name']
+        self.tag = response['data'][str(clan_id)]['tag']
 
 
 class Province:
@@ -74,7 +74,8 @@ def get_cw_battles(application_id, clan_id):
     if cw_battles['status'] != 'ok':
         raise HTTPError(r.url, cw_battles['status'])
     else:
-        return [CWBattle(battle) for battle in cw_battles['data']]
+        if cw_battles:
+            return [CWBattle(battle) for battle in cw_battles['data']]
 
 
 def get_sh_battles(application_id, clan_id):
@@ -103,7 +104,7 @@ def get_clan_info(application_id, clan_id):
     if clan_info['status'] != 'ok':
         raise HTTPError(r.url, clan_info['status'])
     else:
-        return Clan(clan_info)
+        return Clan(clan_info, clan_id)
 
 
 def get_province_info(application_id, front_id, province_id):
