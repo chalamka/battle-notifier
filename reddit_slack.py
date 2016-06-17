@@ -65,13 +65,8 @@ class BattleNotifier:
     def _simul_check(self, battle):
         simuls = []
 
-<<<<<<< HEAD
         for b, _, __ in self.battles:
             if abs((b.convert_time() - battle.convert_time()).total_seconds() / 60) < 5 and battle.battle_id != b.battle_id:
-=======
-        for b in self.battles:
-            if abs(b.time - battle.time) < 5 and battle.battle_id != b.battle_id:
->>>>>>> 984965f7ac7e669043f99ba57812f27bbcedd86d
                 simuls.append(b)
 
         return simuls
@@ -91,29 +86,17 @@ class BattleNotifier:
                 minutes_until_battle = time_until_battle.total_seconds() / 60
 
                 if battle.type == 'attack' and battle.attack_type == 'tournament':
-<<<<<<< HEAD
                     time_text = "Tournament Round {} begins at {} CST popping in {} minutes".format(
-=======
-                    time_text = "Tournament Round {} of {} begins at {} CST popping in ~{} minutes".format(
->>>>>>> 984965f7ac7e669043f99ba57812f27bbcedd86d
                         province.round_number,
                         # this doesn't work right now 
                         # ceil(log2(len(province.attackers))),
                         battle_start_time.strftime("%H:%M"),
-<<<<<<< HEAD
                         int(minutes_until_battle - 14))
-=======
-                        minutes_until_battle - 14)
->>>>>>> 984965f7ac7e669043f99ba57812f27bbcedd86d
                 else:
                     time_text = "{} begins at {} CST popping in ~{} minutes".format(
                         battle.type.title(),
                         battle_start_time.strftime("%H:%M"),
-<<<<<<< HEAD
                         int(minutes_until_battle - 14))
-=======
-                        minutes_until_battle - 14)
->>>>>>> 984965f7ac7e669043f99ba57812f27bbcedd86d
 
                 simul_text = ""
                 simuls = self._simul_check(battle)
@@ -130,19 +113,6 @@ class BattleNotifier:
                                                                  thumb_url=thumb_url.format(str(clan.clan_id)[-3:], clan.clan_id),
                                                                  text="{}\n{}\n{}".format(province_text, time_text, simul_text))
                 attachments.append(battle_attachment)
-<<<<<<< HEAD
-=======
-
-        payload = slack.build_slack_payload(attachments, "", self.bot_name, self.icon_emoji, self.channel_name)
-        slack.send_slack_webhook(self.slack_url, payload)
-
-    def _configure_logging(self, level):
-        abspath = os.path.abspath(__file__)
-        dname = os.path.dirname(abspath)
-        os.chdir(dname)
-        if not os.path.exists("logs/"):
-            os.mkdir("logs/")
->>>>>>> 984965f7ac7e669043f99ba57812f27bbcedd86d
 
         payload = slack.build_slack_payload(attachments, "<!channel>", self.bot_name, self.icon_emoji, self.channel_name)
         slack.send_slack_webhook(self.slack_url, payload)
@@ -174,7 +144,6 @@ def configure_parser():
     return parser
 
 
-<<<<<<< HEAD
 def configure_logging(self, level):
     abspath = os.path.abspath(__file__)
     dname = os.path.dirname(abspath)
@@ -193,8 +162,6 @@ def configure_logging(self, level):
     return l
 
 
-=======
->>>>>>> 984965f7ac7e669043f99ba57812f27bbcedd86d
 def main(args):
     bn = BattleNotifier()
     bn.run()
