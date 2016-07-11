@@ -7,7 +7,6 @@ import time
 from urllib.error import HTTPError
 import slack_webhooks as slack
 import worldoftanks_requests as wot
-import argparse
 from itertools import dropwhile
 from math import log2, ceil
 
@@ -24,6 +23,7 @@ class BattleNotifier:
         self.icon_emoji = config['icon_emoji']
         self.channel_name = config['channel_name']
         self.slack_url = config['slack_url']
+        self.update_interval = config['update_interval']
 
     def run(self):
         while True:
@@ -31,7 +31,7 @@ class BattleNotifier:
                 if self._update_battles():
                     self.logger.info("Found battle") 
                     self._slack_notification()
-                time.sleep(60)
+                time.sleep(self.update_interval)
                 self.logger.info("Sleep cycle completed")
             except KeyboardInterrupt:
                 self.logger.critical("Interrupted, shutting down")
@@ -79,7 +79,9 @@ class BattleNotifier:
         for battle, province, clan in self.battles:
             if not battle.notified:
                 battle.notified = True
-                province_text = "Province: {} Map: {}".format(province.province_name, province.arena_name)
+                province_text = "*Province:* {} *Map:* {} *Server:*  {}".format(province.province_name,
+                                                                                province.arena_name,
+                                                                                province.server)
 
                 battle_start_time = dt.datetime.fromtimestamp(int(battle.time))
                 time_until_battle = battle_start_time - current_time
@@ -93,7 +95,7 @@ class BattleNotifier:
                         battle_start_time.strftime("%H:%M"),
                         int(minutes_until_battle - 14))
                 else:
-                    time_text = "{} begins at {} CST popping in ~{} minutes".format(
+                    time_text = "*{}* begins at {} CST popping in {} minutes".format(
                         battle.type.title(),
                         battle_start_time.strftime("%H:%M"),
                         int(minutes_until_battle - 14))
@@ -101,8 +103,9 @@ class BattleNotifier:
                 simul_text = ""
                 simuls = self._simul_check(battle)
                 if simuls:
-                    simul_text = "This battle appears to occur simultaneously with {} other battles: {}.".format(
-                            len(simuls),
+                    simul_text = "There are {} battles occurring at this time: {}, {}.".format(
+                            len(simuls) + 1,
+                            province.province_name,
                             ", ".join([b.province_name for b in simuls]))
 
                 battle_attachment = slack.build_slack_attachment(fallback="Upcoming CW battle vs. {}".format(clan.tag),
@@ -118,7 +121,6 @@ class BattleNotifier:
         slack.send_slack_webhook(self.slack_url, payload)
         self.logger.info("Slack webhook notification sent")
 
-    
     def _load_config(self, filename):
         try:
             with open(filename) as fp:
@@ -132,16 +134,6 @@ class BattleNotifier:
 def write_json(filename, to_write):
     with open(filename, 'w') as fp:
         return json.dump(to_write, fp)
-
-
-def configure_parser():
-    parser = argparse.ArgumentParser()
-    subparser = parser.add_subparsers()
-
-    daemon = subparser.add_parser('daemon')
-    daemon.set_defaults(func=notify_loop)
-
-    return parser
 
 
 def configure_logging(level):
