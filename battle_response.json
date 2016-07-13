@@ -1,0 +1,64 @@
+{
+    "status": "ok",
+    "meta": {
+        "count": 5
+    },
+    "data": [
+        {
+            "attack_type": "tournament",
+            "front_id": "1604_us_event_asia",
+            "front_name": "Event Front",
+            "competitor_id": 1000003319,
+            "time": 1462069847,
+            "vehicle_level": 8,
+            "province_id": "phnompenh",
+            "type": "attack",
+            "province_name": "Phnom Penh"
+        },
+        {
+            "attack_type": null,
+            "front_id": "1604_us_event_asia",
+            "front_name": "Event Front",
+            "competitor_id": 1000002392,
+            "time": 1462069968,
+            "vehicle_level": 8,
+            "province_id": "chaophrayasurasak",
+            "type": "defence",
+            "province_name": "Chaophraya Surasak"
+        },
+        {
+            "attack_type": null,
+            "front_id": "1604_us_event_asia",
+            "front_name": "Event Front",
+            "competitor_id": 1000002392,
+            "time": 1462069973,
+            "vehicle_level": 8,
+            "province_id": "mongpan",
+            "type": "defence",
+            "province_name": "Mong Pan"
+        },
+        {
+            "attack_type": "tournament",
+            "front_id": "1604_us_event_asia",
+            "front_name": "Event Front",
+            "competitor_id": 1000022777,
+            "time": 1462071600,
+            "vehicle_level": 8,
+            "province_id": "zhangping",
+            "type": "attack",
+            "province_name": "Zhangping"
+        },
+        {
+            "attack_type": "tournament",
+            "front_id": "1604_us_event_asia",
+            "front_name": "Event Front",
+            "competitor_id": 1000003319,
+            "time": 1462071601,
+            "vehicle_level": 8,
+            "province_id": "guigang",
+            "type": "attack",
+            "province_name": "Guigang"
+        }
+    ]
+}
+

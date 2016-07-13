@@ -1,18 +1,81 @@
 import requests
+from urllib.error import HTTPError
+import datetime as dt
+from time import sleep
 
+
+class CWBattle:
+    def __init__(self, response):
+        self.attack_type = response['attack_type']
+        self.front_id = response['front_id']
+        self.front_name = response['front_name']
+        self.competitor_id = response['competitor_id']
+        self.time = response['time']
+        self.vehicle_level = response['vehicle_level']
+        self.province_id = response['province_id']
+        self.type = response['type']
+        self.province_name = response['province_name']
+        self.battle_id = str(self.province_id) + str(self.time)
+        self.notified = False
+
+    def convert_time(self):
+        return dt.datetime.fromtimestamp(int(self.time))
+
+
+class Clan:
+    def __init__(self, response, clan_id):
+        self.clan_id = response['data'][str(clan_id)]['clan_id']
+        self.name = response['data'][str(clan_id)]['name']
+        self.tag = response['data'][str(clan_id)]['tag']
+
+
+class Province:
+    def __init__(self, response):
+        self.arena_id = response['data'][0]['arena_id']
+        self.arena_name = response['data'][0]['arena_name']
+        self.attackers = response['data'][0]['attackers']
+        self.battles_start_at = response['data'][0]['battles_start_at']
+        self.competitors = response['data'][0]['competitors']
+        self.current_min_bet = response['data'][0]['current_min_bet']
+        self.daily_revenue = response['data'][0]['daily_revenue']
+        self.front_id = response['data'][0]['front_id']
+        self.front_name = response['data'][0]['front_name']
+        self.is_borders_disabled = response['data'][0]['is_borders_disabled']
+        self.landing_type = response['data'][0]['landing_type']
+        self.last_won_bet = response['data'][0]['last_won_bet']
+        self.max_bets = response['data'][0]['max_bets']
+        self.neighbours = response['data'][0]['neighbours']
+        self.owner_clan_id = response['data'][0]['owner_clan_id']
+        self.pillage_end_at = response['data'][0]['pillage_end_at']
+        self.prime_time = response['data'][0]['prime_time']
+        self.province_id = response['data'][0]['province_id']
+        self.province_name = response['data'][0]['province_name']
+        self.revenue_level = response['data'][0]['revenue_level']
+        self.round_number = response['data'][0]['round_number']
+        self.server = response['data'][0]['server']
+        self.status = response['data'][0]['status']
+        self.uri = response['data'][0]['uri']
+        self.world_redivision = response['data'][0]['world_redivision']
+        self.active_battles = response['data'][0]['active_battles']
 
 def get_cw_battles(application_id, clan_id):
     """
     Get cw battle information for a clan from worldoftanks API
-    :return:  dictionary of parsed json data for each battle type
+    :return:  list of Battle objects
     """
     payload = {'application_id': application_id, 'clan_id': clan_id}
 
     cw_url = 'https://api.worldoftanks.com/wot/globalmap/clanbattles/'
 
-    cw_battles = requests.get(cw_url, params=payload)
+    r = requests.get(cw_url, params=payload)
+    cw_battles = r.json()
+    sleep(.2)
 
-    return cw_battles.json()
+    if cw_battles['status'] != 'ok':
+        raise HTTPError(r.url, cw_battles['status'])
+    else:
+        if cw_battles:
+            return [CWBattle(battle) for battle in cw_battles['data']]
 
 
 def get_sh_battles(application_id, clan_id):
@@ -34,9 +97,14 @@ def get_clan_info(application_id, clan_id):
 
     clan_url = 'https://api.worldoftanks.com/wot/globalmap/claninfo/'
 
-    clan_info = requests.get(clan_url, params=payload)
+    r = requests.get(clan_url, params=payload)
+    clan_info = r.json()
+    sleep(.2)
 
-    return clan_info.json()
+    if clan_info['status'] != 'ok':
+        raise HTTPError(r.url, clan_info['status'])
+    else:
+        return Clan(clan_info, clan_id)
 
 
 def get_province_info(application_id, front_id, province_id):
@@ -44,6 +112,11 @@ def get_province_info(application_id, front_id, province_id):
 
     province_url = 'https://api.worldoftanks.com/wot/globalmap/provinces/'
 
-    province_info = requests.get(province_url, params=payload)
+    r = requests.get(province_url, params=payload)
+    province_info = r.json()
+    sleep(.2)
 
-    return province_info.json()
+    if province_info['status'] != 'ok':
+        raise HTTPError(r.url, province_info['status'])
+    else:
+        return Province(province_info)
