@@ -1,10 +1,5 @@
 # rddt-slack
-Script to send World of Tanks battle notifications to (RDDT) slack
 
-For CW battles, using python 3+:
+Process that sends notifications to Slack when World of Tanks Clan Battles are discovered
 
-`python reddit_slack.py cw_notification`
-
-For SH battles, use:
-
-`python reddit_slack.py sh_notification`
+To run use `python reddit_slack.py`

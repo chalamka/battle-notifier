@@ -4,5 +4,6 @@
   "bot_name":"",
   "icon_emoji":"",
   "channel_name":"",
-  "slack_url":""
+  "slack_url":"",
+  "update_interval":120
 }
