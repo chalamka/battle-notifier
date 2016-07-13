@@ -114,7 +114,8 @@ class BattleNotifier:
                                                                  title=":rddt: RDDT vs. {} :fire:".format(clan.tag),
                                                                  level="good" if battle.type == 'defence' else "danger",
                                                                  thumb_url=thumb_url.format(str(clan.clan_id)[-3:], clan.clan_id),
-                                                                 text="{}\n{}\n{}".format(province_text, time_text, simul_text))
+                                                                 text="{}\n{}\n{}".format(province_text, time_text, simul_text),
+                                                                 markdown_in=['text'])
                 attachments.append(battle_attachment)
 
         payload = slack.build_slack_payload(attachments, "<!channel>", self.bot_name, self.icon_emoji, self.channel_name)

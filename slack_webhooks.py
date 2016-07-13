@@ -2,14 +2,15 @@ import requests
 import json
 
 
-def build_slack_attachment(fallback, pretext, text, level, title, fields, thumb_url):
+def build_slack_attachment(fallback, pretext, text, level, title, fields, thumb_url, markdown_in):
     attachment = {'fallback': fallback,
                   'pretext': pretext,
                   'color': level,
                   'text': text,
                   'title': title,
                   'fields': fields,
-                  'thumb_url': thumb_url}
+                  'thumb_url': thumb_url,
+                  'mrkdwn_in': markdown_in}
     return attachment
 
 
