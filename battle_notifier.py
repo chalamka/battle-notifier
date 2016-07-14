@@ -129,7 +129,7 @@ class BattleNotifier:
                 return json.load(fp)
         except IOError:
             self.logger.critical("Failed to load configuration file: {}".format(filename))
-            self.logger.critical("Exiting script (cannot load config)")
+            self.logger.critical("Exiting (cannot load config)")
             sys.exit(1)
 
 
