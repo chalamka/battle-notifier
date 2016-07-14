@@ -24,6 +24,7 @@ class BattleNotifier:
         self.channel_name = config['channel_name']
         self.slack_url = config['slack_url']
         self.update_interval = config['update_interval']
+        self.clan_tag = config['clan_tag']
 
     def run(self):
         while True:
@@ -111,7 +112,7 @@ class BattleNotifier:
                 battle_attachment = slack.build_slack_attachment(fallback="Upcoming CW battle vs. {}".format(clan.tag),
                                                                  pretext="",
                                                                  fields=[],
-                                                                 title=":rddt: RDDT vs. {} :fire:".format(clan.tag),
+                                                                 title=":{0}: {0} vs. {1} :fire:".format(self.clan_tag, clan.tag),
                                                                  level="good" if battle.type == 'defence' else "danger",
                                                                  thumb_url=thumb_url.format(str(clan.clan_id)[-3:], clan.clan_id),
                                                                  text="{}\n{}\n{}".format(province_text, time_text, simul_text),
