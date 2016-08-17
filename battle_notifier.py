@@ -74,6 +74,7 @@ class BattleNotifier:
 
     def _slack_notification(self):
         attachments = []
+        notification_level = "<!here>"
         thumb_url = "http://na.wargaming.net/clans/media/clans/emblems/cl_{}/{}/emblem_64x64.png"
         current_time = dt.datetime.now()
 
@@ -119,9 +120,11 @@ class BattleNotifier:
                                                                  markdown_in=['text'])
                 attachments.append(battle_attachment)
 
-        payload = slack.build_slack_payload(attachments, "<!channel>", self.bot_name, self.icon_emoji, self.channel_name)
-        slack.send_slack_webhook(self.slack_url, payload)
-        self.logger.info("Slack webhook notification sent")
+        payload = slack.build_slack_payload(attachments, notification_level, self.bot_name, self.icon_emoji, self.channel_name)
+
+        if attachments:
+            slack.send_slack_webhook(self.slack_url, payload)
+            self.logger.info("Slack webhook notification sent")
 
     def _load_config(self, filename):
         try:
