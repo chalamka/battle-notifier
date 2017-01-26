@@ -29,6 +29,9 @@ class BattleNotifier:
     def run(self):
         while True:
             try:
+                # this check tries to deal with a WG API issue where battles return an incorrect timestamp
+                if dt.datetime.now().min == 0:
+                    time.sleep(90)
                 if self._update_battles():
                     self.logger.info("Found battle") 
                     self._slack_notification()
@@ -90,10 +93,9 @@ class BattleNotifier:
                 minutes_until_battle = time_until_battle.total_seconds() / 60
 
                 if battle.type == 'attack' and battle.attack_type == 'tournament':
-                    time_text = "Tournament Round {} begins at {} CST popping in {} minutes".format(
+                    time_text = "Tournament Round {} of {} begins at {} CST popping in {} minutes".format(
                         province.round_number,
-                        # this doesn't work right now 
-                        # ceil(log2(len(province.attackers))),
+                        1 + ceil(log2(len(province.competitors))),
                         battle_start_time.strftime("%H:%M"),
                         int(minutes_until_battle - 14))
                 else:
