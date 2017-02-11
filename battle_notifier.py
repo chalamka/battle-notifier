@@ -97,7 +97,7 @@ class BattleNotifier:
                 if battle.type == 'attack' and battle.attack_type == 'tournament':
                     time_text = "Tournament Round {} of {} begins at {} CST popping in {} minutes".format(
                         province.round_number,
-                        1 + ceil(log2(len(province.competitors))),
+                        1 + ceil(log2(1 + len(province.competitors))),
                         battle_start_time.strftime("%H:%M"),
                         int(minutes_until_battle - 14))
                 else:
