@@ -30,8 +30,10 @@ class BattleNotifier:
         while True:
             try:
                 # this check tries to deal with a WG API issue where battles return an incorrect timestamp
-                if dt.datetime.now().min == 0:
+                if dt.datetime.now().minute == 0:
                     time.sleep(90)
+                if dt.datetime.now().minute == 1:
+                    time.sleep(30)
                 if self._update_battles():
                     self.logger.info("Found battle") 
                     self._slack_notification()
