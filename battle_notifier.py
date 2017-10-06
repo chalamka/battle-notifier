@@ -95,13 +95,14 @@ class BattleNotifier:
                 minutes_until_battle = time_until_battle.total_seconds() / 60
 
                 if battle.type == 'attack' and battle.attack_type == 'tournament':
-                    time_text = "Tournament Round {} of {} begins at {} CST popping in {} minutes".format(
+                    time_text = "Tournament Round {} begins at {} CST popping in {} minutes".format(
                         province.round_number,
-                        1 + ceil(log2(1 + len(province.competitors))),
                         battle_start_time.strftime("%H:%M"),
                         int(minutes_until_battle - 14))
+		    if battle.competitor_id == province.owner_clan_id:
+			time_text += "\n*Tank locking is active in this battle*"
                 else:
-                    time_text = "*{}* begins at {} CST popping in {} minutes".format(
+                    time_text = "*{}* begins at {} CST popping in {} minutes\n*Tank locking is active in this battle*".format(
                         battle.type.title(),
                         battle_start_time.strftime("%H:%M"),
                         int(minutes_until_battle - 14))
